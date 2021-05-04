@@ -1,6 +1,8 @@
 import numpy as np 
-from sklearn.linear_model import OrthogonalMatchingPursuit
 import numpy.matlib
+from sklearn.linear_model import OrthogonalMatchingPursuit
+from scipy.sparse.linalg import svds
+
 
 class KSVD:
     def __init__(self, rank, sparsity, max_iterations, max_tolerance):
@@ -9,6 +11,7 @@ class KSVD:
         self.max_iterations = max_iterations
         self.max_tolerance  = max_tolerance
     
+
     def find_distance_between_dictionaries(self, original, new):
         catch_counter = 0
         total_dist    = 0
@@ -24,6 +27,7 @@ class KSVD:
             total_dist    = total_dist + err
             catch_counter = catch_counter + np.sum(err < 0.01)
         ratio = 100 * catch_counter/original.shape[1]
+
 
     def clear_dictionary(self, dictionary, coefficient_matrix, data):
         ''' remove nearly identical atoms from the dictionary '''
@@ -76,3 +80,85 @@ class KSVD:
             A[:, k]          = temp
 
         return A
+
+
+    def update_dictionary(self, D, P, A):
+        ''' 
+        Updates columns of dictionary
+        D -> Dictionary
+        P -> Patch matrix, each column represents patch of the image
+        A -> Sparse image/signal matrix, each column is sparse representation of the patch
+
+        output -> Updated dictionary, Sparse signal representations
+
+
+        Notes: 
+            N_p = num patches
+            n = num pixels in patch
+            N = num pixels in image
+            k = num atoms 
+
+            D.shape = (n, k)
+            P.shape = (n,N_p)
+            A.shape = (k, N_p)
+        '''
+
+        n = D.shape[0]
+        k = D.shape[-1]
+        N_p = P.shape[0]
+
+        # Update each column of D one at a time
+        for k_idx in range(k):
+            
+            res = P - (D @ A) + (D[:,[k_idx]] @ A[[k_idx],:])
+            
+            # Rank 1 approximation
+            u, s, v = svds(res, 1)
+            D[:,[k_idx]] = u*s
+            A[[k_idx],:] = s*v
+
+        return D, A
+
+        
+    def denoise(self, R, D, A, y, lam):
+        ''' 
+        Reconstructs image using dictionary and sparse representations
+        R -> Array of matrices that select patches of image
+        D -> Dictionary
+        A -> Sparse image/signal matrix, each column is sparse representation of the patch
+        y -> noisy, observed image
+        lam -> regularization term that controls how well reconstruction should match observed image
+
+        output -> reconstructed image
+
+
+        Notes: 
+            N_p = num patches
+            n = num pixels in patch
+            N = num pixels in image
+            k = num atoms 
+
+            R.shape = (N_p, n, N)
+            D.shape = (n, k)
+            A.shape = (k, N_p)
+            y.shape = (N,1)
+            lam.shape = (1,)
+        '''
+
+        N_p = R.shape[0]
+        
+        A = np.expand_dims(A.transpose(1,0), -1)        # shape (N_p, k, 1)
+        D = np.expand_dims(D, 0) .repeat(N_p, axis=0)    # shape (N_p, n, k)
+        Rt = R.transpose(0,2,1)                     # shape = (N_p, N, n)
+        
+        mat_inv = np.diag(np.reciprocal(np.diag(lam + np.sum(Rt @ R, axis=0))))
+        x_hat = mat_inv  @ (lam + np.sum(Rt @ D @ A, axis=0))
+
+        return x_hat
+
+
+
+
+
+
+
