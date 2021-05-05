@@ -2,20 +2,35 @@ from ksvd import *
 from process_images import *
 import matplotlib.pyplot as plt 
 
+# Hyperparameters
+sigma = 0.25    # noise variance
+img_size = 32   # size image to resized to 
+patch_size = 3  # size of patches extracted from image
+k = 16          # dictionary size
+lam = 0.5       # noisy image weightage
+
+
+
+
+
 # Load the image
 img = cv2.imread('./examples/original_images/camera_man.png', 0)
-img = resize_image(img, 32, 32)
+img = resize_image(img, img_size, img_size)
 img = img/255
-cv2.imwrite('noisy_camera_man.png', (255*X).astype(np.uint8))
+cv2.imwrite('noisy_camera_man.png', (255*img).astype(np.uint8))
 
 
 # Add noise
-sigma = 0.25
 X = img + np.random.normal(0, sigma, size = img.shape)
 X = np.clip(X, 0, 1)
 
 
 # Get patches
+R, patches = get_patches(X, patch_size)
+
+
+# Run K-SVD Denoising algorithm
+ksvd = KSVD()
 
 
 # n = 4
