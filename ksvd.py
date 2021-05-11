@@ -5,7 +5,7 @@ from scipy.sparse.linalg import svds
 
 
 class KSVD:
-    def __init__(self, rank, sparsity, max_iterations, max_tolerance):
+    def __init__(self, rank = 1, sparsity = 1, max_iterations = 1, max_tolerance = 1):
         self.rank           = rank 
         self.sparsity       = sparsity
         self.max_iterations = max_iterations
@@ -57,12 +57,13 @@ class KSVD:
 
         n, P = X.shape
         n, K = D.shape
-        A    = np.zeros((n, P))
+        A    = np.zeros((K, P))
+
         for k in range(P):
             a           = []
-            x           = X[:, k]               # shape n, 1
+            x           = X[:, k]              # shape n, 1
             residual    = x
-            idxs        = np.zeros((L, 1))  
+            idxs        = np.zeros((L)).astype(np.int)  
 
             for j in range(L):
                 projection = D.T @ x            # shape K, 1
@@ -75,9 +76,11 @@ class KSVD:
                 if np.sum(residual ** 2) < 1e-6:
                     break
             
-            temp             = np.zeros((K, 1))
-            temp(idxs[:j+1]) = a
+            temp             = np.zeros((K))
+            temp[idxs[:j+1]] = a
+            # temp = temp.reshape((-1, 1))
             A[:, k]          = temp
+            
 
         return A
 

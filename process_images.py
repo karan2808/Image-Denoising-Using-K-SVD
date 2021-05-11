@@ -20,6 +20,7 @@ def get_patches(image, patch_size):
     '''get image patches of N, patch_size, patch_size'''
     
 
+
     # Compute the selection tensor R
     indices = np.arange(image.size).reshape(image.shape)                                 
     patch_idx = image_transforms.extract_patches_2d(indices, (patch_size, patch_size))  # shape (num patches, patch_size, patch_size)
@@ -30,11 +31,15 @@ def get_patches(image, patch_size):
 
     R = np.zeros((N_p, patch_size**2, N))  
     np.put_along_axis(R, patch_idx, 1, axis=-1)
-     
+
     # Compute actual image patches from the selection matrices
     y = image.reshape(1,-1,1).repeat(N_p,axis=0)
     patches = R @ y
-    patches = patches.reshape(-1, patch_size, patch_size)
+
+
+
+    patches = patches.reshape(patch_size**2, -1)
+
 
     return R, patches
 

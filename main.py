@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 
 # Hyperparameters
 sigma = 0.25    # noise variance
-img_size = 32   # size image to resized to 
+img_size = 8    # size image to resized to 
 patch_size = 3  # size of patches extracted from image
-k = 16          # dictionary size
-lam = 0.5       # noisy image weightage
+k = 50          # dictionary size
+lam = 1       # noisy image weightage
 
 
 
@@ -30,8 +30,19 @@ R, patches = get_patches(X, patch_size)
 
 
 # Run K-SVD Denoising algorithm
+num_iters = 50
+D = np.random.randn(patch_size**2,k)
+
 ksvd = KSVD()
 
+for i in range(num_iters):
+    A = ksvd.omp(D, X = patches, L = 3)
+    D, A = ksvd.update_dictionary(D, patches, A)
+    X_hat = ksvd.denoise(R, D, A, X.reshape(-1,1), lam)
+    R, patches = get_patches(X_hat.reshape(X.shape), patch_size) 
+
+cv2.imwrite('X_hat.png', (255*X_hat.reshape(X.shape)).astype(np.uint8))
+# cv2.waitKey(1000)
 
 # n = 4
 # k = 5
