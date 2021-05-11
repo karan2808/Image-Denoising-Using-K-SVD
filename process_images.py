@@ -43,3 +43,59 @@ def get_patches(image, patch_size):
 
     return R, patches
 
+def get_overcomplete_dictionary(n, K, normalized=True, inverse=True):
+    """
+    Builds a Dictionary matrix matrix using the inverse discrete cosine transform of type II,
+    cf. https://en.wikipedia.org/wiki/Discrete_cosine_transform#DCT-II
+    Args:
+        n: number of dictionary rows
+        K: number of dictionary columns
+        normalized: If True, the columns will be l2-normalized
+        inverse: Uses the inverse transform (as usually needed in applications)
+    Returns:
+        Dictionary build from the Kronecker-Delta of the inverse discrete cosine transform of type II applied to the identity.
+    """
+    D = np.zeros((K, n))
+    for i in range(n):
+        v = np.zeros(n)
+        v[i] = 1.0
+        y = np.array([sum(np.multiply(v, np.cos((0.5 + np.arange(n)) * k * np.pi / K))) for k in range(K)])
+        if normalized:
+            y[0] = 1 / np.sqrt(2) * y[0]
+            y = np.sqrt(2 / n) * y
+        D[:, i] = y
+
+    if inverse:
+        D = D.T
+    return np.kron(D.T, D.T)
+
+def visualize_dictionary(D):
+    n, K = D.shape
+    M = D
+    # stretch atoms
+    for k in range(K):
+        M[:, k] = M[:, k] - (M[:, k].min())
+        if M[:, k].max():
+            M[:, k] = M[:, k] / D[:, k].max()
+
+    # patch size
+    n_r = int(np.sqrt(n))
+
+    # patches per row / column
+    K_r = int(np.sqrt(K))
+
+    # we need n_r*K_r+K_r+1 pixels in each direction
+    dim = n_r * K_r + K_r + 1
+    V = np.ones((dim, dim)) * np.min(D)
+
+    # compute the patches
+    patches = [np.reshape(D[:, i], (n_r, n_r)) for i in range(K)]
+
+    # place patches
+    for i in range(K_r):
+        for j in range(K_r):
+            V[j * n_r + 1 + j:(j + 1) * n_r + 1 + j, i * n_r + 1 + i:(i + 1) * n_r + 1 + i] = patches[
+                i * K_r + j]
+    V *= 255
+    cv2.imshow('V.png', V.astype(np.uint8))
+    cv2.waitKey(0)
