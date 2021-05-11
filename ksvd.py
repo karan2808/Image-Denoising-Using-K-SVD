@@ -10,6 +10,7 @@ class KSVD:
         self.sparsity       = sparsity
         self.max_iterations = max_iterations
         self.max_tolerance  = max_tolerance
+
     
 
     def find_distance_between_dictionaries(self, original, new):
@@ -73,7 +74,7 @@ class KSVD:
                 cols       = D[:, idxs[:j+1]]   # shape n, j
                 a          = np.linalg.pinv(cols) @ x # shape j, 1
                 residual   = x - cols @ a
-                if np.sum(residual ** 2) < 1e-6:
+                if np.sum(residual) < 1e-6:
                     break
             
             temp             = np.zeros((K))
