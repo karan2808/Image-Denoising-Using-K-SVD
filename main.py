@@ -3,17 +3,18 @@ from process_images import *
 import matplotlib.pyplot as plt 
 
 # Hyperparameters
-sigma = 0.25    # noise variance
-img_size = 8    # size image to resized to 
-patch_size = 3   # size of patches extracted from image
-k = 100         # dictionary size
-lam = 1       # noisy image weightage
-n_nonzero_coefs=3 
+sigma = 0.25         # noise variance
+img_size = 8         # size image to resized to 
+patch_size = 3       # size of patches extracted from image
+k = 100              # dictionary size
+lam = 1              # noisy image weightage
+n_nonzero_coefs = 3  # number of nonzero entries in alphas
+num_iters = 50       # iterations
 
 # Load the image
 img = cv2.imread('./examples/original_images/camera_man.png', 0)
-img = resize_image(img, img_size, img_size)
-img = img/255
+img = cv2.resize(img, (img_size, img_size))
+img = img / 255
 cv2.imwrite('noisy_camera_man.png', (255*img).astype(np.uint8))
 
 
@@ -27,12 +28,12 @@ R, patches = get_patches(X, patch_size)
 
 
 # Run K-SVD Denoising algorithm
-num_iters = 50
-D = np.random.randn(patch_size**2, k)
-D = D / np.linalg.norm(D, axis=0)
-#D = get_overcomplete_dictionary(patch_size,int(np.sqrt(k)))
-#D = D.T
-# visualize_dictionary(D)
+# D = np.random.randn(patch_size**2, k)
+# D = D / np.linalg.norm(D, axis=0)
+D = get_overcomplete_dictionary(patch_size, int(np.sqrt(k)))
+print(D.shape)
+visualize_dictionary(D)
+
 
 ksvd = KSVD()
 # print(D.reshape((36,-1)).shape)
