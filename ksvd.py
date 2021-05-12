@@ -116,7 +116,10 @@ def update_dictionary(D, P, A):
         res = diff + (D[:, k].reshape((-1, 1)) @ A[k, nonzero_idxs].reshape((1, -1)))
         
         # Rank 1 approximation
-        u, s, v = svds(res, 1)
+        if len(nonzero_idxs) == 1:
+            u, s, v = res, 1, np.array(1)
+        else:
+            u, s, v = svds(res, 1)
         D[:, k] = u.flatten()
         A[k, nonzero_idxs] = s * v.flatten()
 

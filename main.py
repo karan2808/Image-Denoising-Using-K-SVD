@@ -9,7 +9,7 @@ patch_size = 20      # size of patches extracted from image
 k = 256              # dictionary size
 lam = 1              # noisy image weightage
 n_nonzero_coefs = 3  # number of nonzero entries in alphas
-num_iters = 1        # iterations
+num_iters = 10        # iterations
 
 # Load the image
 img = cv2.imread('./examples/original_images/camera_man.png', 0)
