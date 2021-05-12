@@ -6,24 +6,27 @@ import numpy as np
 def get_patches(image, patch_size):
     '''Get N image overlapping patches with shape (patch_size, patch_size) and vectorize to (patch_size**2, N)'''
     
-    # Compute the selection tensor R
-    indices = np.arange(image.size).reshape(image.shape)                                 
-    patch_idx = image_transforms.extract_patches_2d(indices, (patch_size, patch_size))  # shape (num patches, patch_size, patch_size)
-    patch_idx = patch_idx.reshape(-1, patch_size**2, 1)                                 # shape (num patches, patch_size*patch_size)
+    # # Compute the selection tensor R
+    # indices = np.arange(image.size).reshape(image.shape)                                 
+    # patch_idx = image_transforms.extract_patches_2d(indices, (patch_size, patch_size))  # shape (num patches, patch_size, patch_size)
+    # patch_idx = patch_idx.reshape(-1, patch_size**2, 1)                                 # shape (num patches, patch_size*patch_size)
 
-    N_p = patch_idx.shape[0]   # number of patches
-    N = image.size             # number of pixels in image
+    # N_p = patch_idx.shape[0]   # number of patches
+    # N = image.size             # number of pixels in image
 
-    R = np.zeros((N_p, patch_size**2, N))  
-    np.put_along_axis(R, patch_idx, 1, axis=-1)
+    # R = np.zeros((N_p, patch_size**2, N))  
+    # np.put_along_axis(R, patch_idx, 1, axis=-1)
 
-    # Compute actual image patches from the selection matrices
-    y = image.reshape(1,-1,1).repeat(N_p,axis=0)
-    patches = R @ y
+    # # Compute actual image patches from the selection matrices
+    # y = image.reshape(1,-1,1).repeat(N_p,axis=0)
+    # patches = R @ y
 
-    patches = patches.reshape(patch_size**2, -1)
+    # patches = patches.reshape(patch_size**2, -1)
 
-    return R, patches
+    # return R, patches
+
+    patches = image_transforms.extract_patches_2d(image, (patch_size, patch_size))
+    return patches.reshape(patch_size ** 2, -1)
 
 def get_overcomplete_dictionary(n, K, normalized=True):
     """
@@ -47,7 +50,7 @@ def get_overcomplete_dictionary(n, K, normalized=True):
         D[:, i] = y
     return np.kron(D.T, D.T)
 
-def visualize_dictionary(D):
+def visualize_dictionary(D, name='D.png'):
     n, K = D.shape
     M = D
     # stretch atoms
@@ -75,5 +78,5 @@ def visualize_dictionary(D):
             V[j * n_r + 1 + j:(j + 1) * n_r + 1 + j, i * n_r + 1 + i:(i + 1) * n_r + 1 + i] = patches[
                 i * K_r + j]
     V *= 255
-    cv2.imwrite('V.png', V.astype(np.uint8))
-    cv2.waitKey(0)
+    cv2.imwrite(name, V.astype(np.uint8))
+    # cv2.waitKey(0)
