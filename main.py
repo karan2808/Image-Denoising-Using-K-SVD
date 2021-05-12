@@ -33,37 +33,19 @@ D = get_overcomplete_dictionary(patch_size, int(np.sqrt(k)))
 visualize_dictionary(D)
 
 
-ksvd = KSVD()
-# print(D.reshape((36,-1)).shape)
-# input()
-
 for i in range(num_iters):
     # reg = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs).fit(X=D.reshape((36,-1)), y=patches.T)
-
     # reg = OrthogonalMatchingPursuit().fit(X=D, y=patches)
     # A = (reg.coef_).T
-    A = ksvd.omp(D, patches, 3)
+    A = omp(D, patches, 3)
 
-    D, A = ksvd.update_dictionary(D, patches, A)
-    visualize_dictionary(D, 'D1.png')
-    # X_hat = ksvd.denoise(R, D, A, X.reshape(-1,1), lam)
-    # R, patches = get_patches(X_hat.reshape(X.shape), patch_size) 
+    D, A = update_dictionary(D, patches, A)
+    visualize_dictionary(D, 'D_'+str(i)+'.png')
 
     # if i%5==0:
     #     img_hat = 255*X_hat.reshape(X.shape)
     #     cv2.imwrite('X_hat_'+str(i)+'.png', (255*X_hat.reshape(X.shape)).astype(np.uint8))
 
+X_hat = denoise(R, D, A, X.reshape(-1,1), lam)
 
-# n = 4
-# k = 5
-# N_p = 10
-# N = 30
-
-# D = np.random.rand(n,k)
-# P = np.random.rand(n, N_p)
-# A = np.random.rand(k,N_p)
-# R = np.random.rand(N_p, n, N)
-# y = np.random.rand(N, 1)
-
-# ksvd = KSVD(rank=None, sparsity=None, max_iterations=None, max_tolerance=None)
-# ksvd.denoise(R, D, A, y, lam=1)
+    

@@ -4,9 +4,9 @@ from sklearn.linear_model import OrthogonalMatchingPursuit
 from scipy.sparse.linalg import svds
 
 
-class KSVD:
-    def __init__(self):
-        return
+# class KSVD:
+#     def __init__(self):
+#         return
 
     # def __init__(self, rank = 1, sparsity = 1, max_iterations = 1, max_tolerance = 1):
         # self.rank           = rank 
@@ -47,120 +47,117 @@ class KSVD:
     #             G                = dictionary.T @ dictionary
     #             G                = G - np.diag(np.diag(G))
 
-    def omp(self, D, X, L):
-        ''' Sparse coding based on given dictionary and number of columns to use
-        D -> Dictionary
-        X -> Image/Signals
-        L -> Max number of columns/atoms for each signal
+def omp(D, X, L):
+    ''' Sparse coding based on given dictionary and number of columns to use
+    D -> Dictionary
+    X -> Image/Signals
+    L -> Max number of columns/atoms for each signal
 
-        output -> Sparse Coefficient Matrix
-        '''
-        n, P = X.shape
-        n, K = D.shape
-        A    = np.zeros((K, P))
+    output -> Sparse Coefficient Matrix
+    '''
+    n, P = X.shape
+    n, K = D.shape
+    A    = np.zeros((K, P))
 
-        for k in range(P):
-            a           = []
-            x           = X[:, k]              # shape n, 1
-            residual    = x
-            idxs        = np.zeros((L)).astype(np.int)  
+    for k in range(P):
+        a           = []
+        x           = X[:, k]              # shape n, 1
+        residual    = x
+        idxs        = np.zeros((L)).astype(np.int)  
 
-            for j in range(L):
-                projection = D.T @ x            # shape K, 1
-                max_idx    = np.argmax(projection)
-                max_v      = np.amax(projection)
-                idxs[j]    = max_idx
-                cols       = D[:, idxs[:j+1]]   # shape n, j
-                a          = np.linalg.pinv(cols) @ x # shape j, 1
-                residual   = x - cols @ a
-                if np.sum(residual) < 1e-6:
-                    break
-            
-            temp             = np.zeros((K))
-            temp[idxs[:j+1]] = a
-            # temp = temp.reshape((-1, 1))
-            A[:, k]          = temp
-            
-        return A
-
-
-    def update_dictionary(self, D, P, A):
-        ''' 
-        Updates columns of dictionary
-        D -> Dictionary
-        P -> Patch matrix, each column represents patch of the image
-        A -> Sparse image/signal matrix, each column is sparse representation of the patch
-
-        output -> Updated dictionary, Sparse signal representations
-
-
-        Notes: 
-            N_p = num patches
-            n = num pixels in patch
-            N = num pixels in image
-            k = num atoms 
-
-            D.shape = (n, K)
-            P.shape = (n, N_p)
-            A.shape = (K, N_p)
-        '''
-
-        n, K = D.shape
-        n, N_p = P.shape
-
-        # Update each column of D one at a time
-        for k in range(K):
-            nonzero_idxs = np.nonzero(A[k])[0]
-            if len(nonzero_idxs) == 0:
-                continue
-            diff = P[:, nonzero_idxs] - (D @ A)[:, nonzero_idxs]
-            res = diff + (D[:, k].reshape((-1, 1)) @ A[k, nonzero_idxs].reshape((1, -1)))
-            print(res.shape)
-            
-            # Rank 1 approximation
-            u, s, v = svds(res, 1)
-            print(u.shape)
-            D[:, k] = u.flatten()
-            A[k, nonzero_idxs] = s * v.flatten()
-
-        return D, A
-
+        for j in range(L):
+            projection = D.T @ x            # shape K, 1
+            max_idx    = np.argmax(projection)
+            max_v      = np.amax(projection)
+            idxs[j]    = max_idx
+            cols       = D[:, idxs[:j+1]]   # shape n, j
+            a          = np.linalg.pinv(cols) @ x # shape j, 1
+            residual   = x - cols @ a
+            if np.sum(residual) < 1e-6:
+                break
         
-    def denoise(self, R, D, A, y, lam):
-        ''' 
-        Reconstructs image using dictionary and sparse representations
-        R -> Array of matrices that select patches of image
-        D -> Dictionary
-        A -> Sparse image/signal matrix, each column is sparse representation of the patch
-        y -> noisy, observed image
-        lam -> regularization term that controls how well reconstruction should match observed image
-
-        output -> reconstructed image
-
-
-        Notes: 
-            N_p = num patches
-            n = num pixels in patch
-            N = num pixels in image
-            k = num atoms 
-
-            R.shape = (N_p, n, N)
-            D.shape = (n, k)
-            A.shape = (k, N_p)
-            y.shape = (N,1)
-            lam.shape = (1,)
-        '''
-
-        N_p = R.shape[0]
+        temp             = np.zeros((K))
+        temp[idxs[:j+1]] = a
+        A[:, k]          = temp
         
-        A = np.expand_dims(A.transpose(1,0), -1)        # shape (N_p, k, 1)
-        D = np.expand_dims(D, 0) .repeat(N_p, axis=0)    # shape (N_p, n, k)
-        Rt = R.transpose(0,2,1)                     # shape = (N_p, N, n)
-        
-        mat_inv = np.diag(np.reciprocal(np.diag(lam + np.sum(Rt @ R, axis=0))))
-        x_hat = mat_inv  @ (lam + np.sum(Rt @ D @ A, axis=0))
+    return A
 
-        return x_hat
+
+def update_dictionary(D, P, A):
+    ''' 
+    Updates columns of dictionary
+    D -> Dictionary
+    P -> Patch matrix, each column represents patch of the image
+    A -> Sparse image/signal matrix, each column is sparse representation of the patch
+
+    output -> Updated dictionary, Sparse signal representations
+
+
+    Notes: 
+        N_p = num patches
+        n = num pixels in patch
+        N = num pixels in image
+        k = num atoms 
+
+        D.shape = (n, K)
+        P.shape = (n, N_p)
+        A.shape = (K, N_p)
+    '''
+
+    n, K = D.shape
+    n, N_p = P.shape
+
+    # Update each column of D one at a time
+    for k in range(K):
+        nonzero_idxs = np.nonzero(A[k])[0]
+        if len(nonzero_idxs) == 0:
+            continue
+        diff = P[:, nonzero_idxs] - (D @ A)[:, nonzero_idxs]
+        res = diff + (D[:, k].reshape((-1, 1)) @ A[k, nonzero_idxs].reshape((1, -1)))
+        
+        # Rank 1 approximation
+        u, s, v = svds(res, 1)
+        D[:, k] = u.flatten()
+        A[k, nonzero_idxs] = s * v.flatten()
+
+    return D, A
+
+    
+def denoise(R, D, A, y, lam):
+    ''' 
+    Reconstructs image using dictionary and sparse representations
+    R -> Array of matrices that select patches of image
+    D -> Dictionary
+    A -> Sparse image/signal matrix, each column is sparse representation of the patch
+    y -> noisy, observed image
+    lam -> regularization term that controls how well reconstruction should match observed image
+
+    output -> reconstructed image
+
+
+    Notes: 
+        N_p = num patches
+        n = num pixels in patch
+        N = num pixels in image
+        k = num atoms 
+
+        R.shape = (N_p, n, N)
+        D.shape = (n, k)
+        A.shape = (k, N_p)
+        y.shape = (N,1)
+        lam.shape = (1,)
+    '''
+
+    N_p = R.shape[0]
+    
+    A = np.expand_dims(A.transpose(1,0), -1)        # shape (N_p, k, 1)
+    D = np.expand_dims(D, 0) .repeat(N_p, axis=0)    # shape (N_p, n, k)
+    Rt = R.transpose(0,2,1)                     # shape = (N_p, N, n)
+    
+    mat_inv = np.diag(np.reciprocal(np.diag(lam + np.sum(Rt @ R, axis=0))))
+    x_hat = mat_inv  @ (lam + np.sum(Rt @ D @ A, axis=0))
+
+    return x_hat
 
 
 
