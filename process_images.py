@@ -4,7 +4,7 @@ from sklearn.feature_extraction.image import extract_patches_2d
 import cv2
 import numpy as np
 
-def get_example_image(image_name='Barbara', image_shape=(512, 512), sigma=None, image_path=None): 
+def get_example_image(image_name=None, image_shape=(512, 512), sigma=None, image_path=None): 
     image = 0
     # Load the image 
     if image_name is not None:
