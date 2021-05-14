@@ -39,4 +39,4 @@ which should print the results of the metrics.
 1.  **Image Denoising Via Sparse and Redundant Representations Over Learned Dictionaries,**
     <br />
     M. Elad and M. Aharon. <br />
-    [[link]](https://www.egr.msu.edu/~aviyente/elad06.pdf). EEE Transactions on Image Processing Dec. 2006.
+    [[link]](https://www.egr.msu.edu/~aviyente/elad06.pdf). IEEE Transactions on Image Processing Dec. 2006.
