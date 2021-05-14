@@ -6,27 +6,32 @@ from denoiser import KSVDDenoiser
 import cv2
 from metrics import psnr
 import numpy as np 
+from metrics import psnr, rmse, structural_similarity
 
 patch_size     = 8
 K              = 16
-sigma          = 5
-iterations     = 5
+sigma          = 1
+iterations     = 3
+
+psnr_vals           = []
+rmse_vals           = []
+ssim_vals           = []
 
 # original_image = get_example_image(image_path='example_images/CameraMan.png', image_shape=(256, 256))
 # noisy_image    = get_example_image(image_path='example_images/CameraMan.png', image_shape=(256, 256), sigma = sigma)
 
-original_image = get_example_image(image_name='Barbara', image_shape=(512, 512))
-noisy_image    = get_example_image(image_name='Barbara', image_shape=(512, 512), sigma = sigma)
+original_image = get_example_image(image_name='Barbara', image_shape=(256, 256))
 
-dict_          = get_dictionary(patch_size, K)
-# dict_          = np.random.normal(size = dict_.shape)
 
-denoiser       = KSVDDenoiser(patch_size = patch_size, iterations = iterations, lambd = 30/sigma, sigma = sigma, noise_gain = 1.15, viz_dict=True)
-denoised_img   = denoiser.denoise(noisy_image, dict_)
-
-cv2.imwrite('original_image.png', normalize(original_image)*255)
-cv2.imwrite('noisy_image.png', normalize(noisy_image)*255)
-cv2.imwrite('denoised_image.png', normalize(denoised_img)*255)
+for sigma in range(1, 100, 5):
+    dict_          = get_dictionary(patch_size, K)
+    noisy_image    = get_example_image(image_name='Barbara', image_shape=(256, 256), sigma = sigma)
+    # dict_          = np.random.normal(size = dict_.shape)
+    denoiser       = KSVDDenoiser(patch_size = patch_size, iterations = iterations, lambd = 30/sigma, sigma = sigma, noise_gain = 1.15, viz_dict=True)
+    denoised_img   = denoiser.denoise(noisy_image, dict_)
+    cv2.imwrite('experiments/original_image_sigma_' + str(sigma) + '.png', normalize(original_image)*255)
+    cv2.imwrite('experiments/noisy_image_sigma_' + str(sigma) + '.png', normalize(noisy_image)*255)
+    cv2.imwrite('experiments/denoised_image_sigma_' + str(sigma) + '.png', normalize(denoised_img)*255)
 
 plt.subplot(1, 3, 1)
 plt.title('original image')
