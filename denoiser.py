@@ -2,10 +2,11 @@ import numpy as np
 from sklearn.feature_extraction.image import extract_patches_2d
 from process_images import get_Y
 from sklearn.linear_model import orthogonal_mp
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+from scipy.sparse.linalg import svds
 
 class KSVDDenoiser():
-    def __init__(self, patch_size = 8, iterations = 10, lambd = 10, sigma = 3, sparsity = 4, noise_gain = 1.15, viz_dict = False):
+    def __init__(self, patch_size = 8, iterations = 10, lambd = 10, sigma = 2, sparsity = 2, noise_gain = 1.1, viz_dict = False):
         self.lambd          = lambd
         self.iterations     = iterations
         self.patch_size     = patch_size
@@ -33,11 +34,11 @@ class KSVDDenoiser():
 
         for itr in range(self.iterations):
             print("Iteration Number " + str(itr))
+            if self.viz_dict:
+                self.visualize_dictionary(itr)
             self.sparse_code(Y)
             self.dictionary_update(Y)
-            if self.viz_dict:
-                self.visualize_dictionary()
-
+            
         recon_img   = np.zeros(image.shape)
         weight_img  = np.zeros(image.shape)
 
@@ -89,16 +90,16 @@ class KSVDDenoiser():
         for k in range(K):
             # get non zero entries 
             nk = np.nonzero(self.A[k, :])[0]
-            if len(nk):
+            if len(nk) == 0:
                 continue
-            Ri             = np.dot(self.D[:, k, None], self.A[None, k, nk]) + Res[:, nk]
-            U, Sg, V       = np.linalg.svd(Ri)
+            Ri             = np.dot(self.D[:, k].reshape((-1, 1)), self.A[k, nk].reshape((1, -1))) + Res[:, nk]
+            U, Sg, V       = svds(Ri, k=1)
             self.D[:, k]   = U[:, 0]
             # 1 svd step
             self.A[k, nk]  = Sg[0] * V[0, :]
-            Res[:, nk]     = Ri - np.dot(self.D[:, k, None], self.A[None, k, nk])
+            Res[:, nk]     = Ri - np.dot(self.D[:, k].reshape((-1, 1)), self.A[k, nk].reshape((1, -1)))
 
-    def visualize_dictionary(self):
+    def visualize_dictionary(self, itr):
         n, K = self.D.shape
         # patch size
         n_r = int(np.sqrt(n))
@@ -115,5 +116,5 @@ class KSVDDenoiser():
                 V[j * n_r + 1 + j:(j + 1) * n_r + 1 + j, i * n_r + 1 + i:(i + 1) * n_r + 1 + i] = patches[
                     i * K_r + j]
         V *= 255
-        plt.imshow(V)
+        plt.imsave('dictionary/dict_' + str(itr) + '.png', V, cmap='gray')
         plt.show()
