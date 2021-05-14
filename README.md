@@ -9,6 +9,7 @@ Create a fresh eviornment using [Anaconda](https://www.anaconda.com/download/) d
 conda install opencv=4.1.2
 conda install matplotlib
 pip install scikit-learn
+pip install scikit-image
 ```
 Recommended python version: 3.7
 
@@ -40,3 +41,5 @@ which should print the results of the metrics.
     <br />
     M. Elad and M. Aharon. <br />
     [[link]](https://www.egr.msu.edu/~aviyente/elad06.pdf). IEEE Transactions on Image Processing Dec. 2006.
+
+2. **Sparselandtools** [[link]](https://github.com/fubel/sparselandtools)
